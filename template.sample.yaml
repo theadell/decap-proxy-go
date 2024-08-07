@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Sample SAM Template for Golang-based Decap GitHub OAuth 2.0 proxy
+
+Globals:
+  Function:
+    Timeout: 4
+    MemorySize: 128
+
+Resources:
+  OAuth2ProxyFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      CodeUri: src/
+      Handler: bootstrap
+      Runtime: provided.al2
+      Environment:
+        Variables:
+          CALLBACK_URL: "placeholder"
+          GITHUB_CLIENT_ID: "<your-client-id>"
+          GITHUB_CLIENT_SECRET: "<your-client-secret>"
+      Events:
+        authorize:
+          Type: Api
+          Properties:
+            Path: /auth
+            Method: GET
+        callback:
+          Type: Api
+          Properties:
+            Path: /callback
+            Method: GET
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL for Prod environment"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+  AouzhotizeEndpoint:
+    Description: "Authorization Endpoint"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/authorize/"
+  CallbackEndpoint:
+    Description: "Callback Endpoint. >> Use this to replace the value of `CALLBACK_URL` environment Variables in OAuthProxyFunction"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/callback/"
+  OAuthProxyFunction:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt OAuthProxyFunction.Arn
+  OAuthProxyFunctionIamRole:
+    Description: "Implicit IAM Role created for OAuthProxy function"
+    Value: !GetAtt OAuthProxyFunctionRole.Arn
